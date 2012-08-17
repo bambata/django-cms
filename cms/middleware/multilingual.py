@@ -46,7 +46,9 @@ def patch_response(content, pages_root, language):
         ignore_paths += [settings.ADMIN_MEDIA_PREFIX]
     if getattr(settings,'STATIC_URL', False):
         ignore_paths += [settings.STATIC_URL]
+    ignore_paths += getattr(settings, 'URLS_WITHOUT_LANGUAGE_REDIRECT', [])
 
+    #import ipdb;ipdb.set_trace()
     HREF_URL_FIX_RE = re.compile(ur'<a([^>]+)href=("|\')(?=%s)(?!(%s))(%s(.*?))("|\')(.*?)>' % (
         quoted_root,
         "|".join([re.escape(p) for p in ignore_paths]),
