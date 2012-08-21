@@ -7,11 +7,12 @@ from django.contrib.sites.models import Site
 from django.shortcuts import get_object_or_404
 from django.template import (NodeList, TextNode, VariableNode, 
     TemplateSyntaxError)
+from django.template import Context
 from django.template.loader import get_template
 from django.template.loader_tags import (ConstantIncludeNode, ExtendsNode, 
     BlockNode)
 import warnings
-from sekizai.helpers import is_variable_extend_node
+#from sekizai.helpers import is_variable_extend_node
 
 def get_page_from_plugin_or_404(cms_plugin):
     return get_object_or_404(Page, placeholders=cms_plugin.placeholder)
@@ -21,9 +22,10 @@ def _extend_blocks(extend_node, blocks):
     Extends the dictionary `blocks` with *new* blocks in the parent node (recursive)
     """
     # we don't support variable extensions
-    if is_variable_extend_node(extend_node):
-        return
-    parent = extend_node.get_parent(None)
+    #if is_variable_extend_node(extend_node):
+    #    return
+    context = Context({'request':True})
+    parent = extend_node.get_parent(context)
     # Search for new blocks
     for node in parent.nodelist.get_nodes_by_type(BlockNode):
         if not node.name in blocks:
@@ -42,12 +44,13 @@ def _extend_blocks(extend_node, blocks):
         break
         
 def _find_topmost_template(extend_node):
-    parent_template = extend_node.get_parent({})
+    context = Context({'request':1})
+    parent_template = extend_node.get_parent(context)
     for node in parent_template.nodelist.get_nodes_by_type(ExtendsNode):
         # Their can only be one extend block in a template, otherwise django raises an exception
         return _find_topmost_template(node)
     # No ExtendsNode
-    return extend_node.get_parent({}) 
+    return extend_node.get_parent(context) 
 
 def _extend_nodelist(extend_node):
     """
@@ -55,8 +58,8 @@ def _extend_nodelist(extend_node):
     ExtendsNode
     """
     # we don't support variable extensions
-    if is_variable_extend_node(extend_node):
-        return []
+    #if is_variable_extend_node(extend_node):
+    #    return []
     blocks = extend_node.blocks
     _extend_blocks(extend_node, blocks)
     placeholders = []
